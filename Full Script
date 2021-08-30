@@ -1,0 +1,127 @@
+import discere.discere as di
+
+di.extract_feature("/content/drive/MyDrive/Skripsi/Data/Positif.fasta",
+                   "/content/drive/MyDrive/Skripsi/Data/Negatif.fasta",'/content')
+
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+import discere.discere as di
+import itertools as it
+import os,pickle
+import shutil, pkg_resources
+from Bio import SeqIO
+from Bio.SeqUtils.ProtParam import ProteinAnalysis
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.model_selection import train_test_split,cross_val_score, GridSearchCV, StratifiedKFold
+from sklearn.svm import SVC
+from sklearn.svm import SVR
+from sklearn import metrics
+from sklearn.decomposition import PCA
+from itertools import cycle
+from sklearn.ensemble import ExtraTreesClassifier,RandomForestClassifier
+import matplotlib.pyplot as plt
+from matplotlib.pyplot import figure
+from sklearn.feature_selection import RFECV
+from sklearn.feature_selection import RFE
+from sklearn.metrics import make_scorer, accuracy_score
+import xgboost as xgb
+from xgboost.sklearn import XGBClassifier
+
+import sys
+
+fasta = []
+test = []
+with open("/content/drive/MyDrive/Skripsi/Data/Data_Covid19.fasta") as file_one:
+    for line in file_one:
+        line = line.strip()
+        if not line:
+           continue
+        if line.startswith(">"):
+            active_sequence_name = line[1:]
+            if active_sequence_name not in fasta:
+                test.append(''.join(fasta))
+                fasta = []
+            continue
+        sequence = line
+        fasta.append(sequence)
+
+# Flush the last fasta block to the test list
+if fasta:
+    test.append(''.join(fasta))
+
+# Print the test list
+for i, row in enumerate(test):
+    print(i)
+    print(row)
+
+scaler = StandardScaler()
+x_train = scaler.fit_transform(x_train)
+x_test = scaler.transform(x_test)
+x_train = pd.DataFrame(x_train)
+x_test = pd.DataFrame(x_test)
+
+estimator = SVC(kernel="linear",random_state=0)
+selector = RFECV(estimator, step=1, cv=StratifiedKFold(10,random_state=0), 
+                 scoring='accuracy')
+selector = selector.fit(x_train, y_train)
+
+ww = selector.ranking_.tolist()
+selector.ranking_
+
+print('Optimal number of features: {}'.format(selector.n_features_))
+
+top =18
+rank=[]
+for i in range(len(selector.ranking_)):
+    rank.append(ww.index(min(ww)))
+    ww[ww.index(min(ww))]=float(np.Inf) #mengurutkan dan mencari fitur dengan bobot terbesar
+    #memperbarui bobot terbesar yang sudah diambil menjadi NINF, negative infinity.
+
+
+peringkat = rank[:top] #Mengambil INDEX fitur dengan bobot tertinggi yang dipilih
+print(peringkat)
+print(len(peringkat))
+
+top_vars=[]
+for i in rank:
+    top_vars.append(list(x_train)[i])
+top_vars=top_vars[:top] #Mengambil NAMA-NAMA fitur dengan bobot tertinggi yang dipilih
+#print(top_vars)
+
+X = X[top_vars] #Membuat dataset baru yang sudah diseleksi fitur
+
+x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.2 , random_state=1)
+
+from sklearn.metrics import classification_report
+from sklearn.metrics import confusion_matrix
+from sklearn.linear_model import LogisticRegression
+
+dtrain = xgb.DMatrix(x_train, label=y_train)
+dvalid = xgb.DMatrix(x_test, label=y_test)
+
+param = {'objective': 'binary:logistic',
+         'booster': 'dart',
+          'eval_metric': 'auc',
+         #'scale_pos_weight': 0.07,
+         'eta': 0.01,
+         'max_depth':5,
+         'min_child_weight':1,
+         'gamma': 0,
+         'subsample' :0.95,
+         'colsample_bytree' :0.35,
+         'reg_alpha': 0.01,
+         'reg_lambda':0.08}
+evallist = [(dvalid, 'eval'), (dtrain, 'train')]
+
+xgboost = xgb.train(param, dtrain, 70 , evallist)
+
+ypred = xgboost.predict(dvalid)
+for i in range(len(ypred)):
+  if ypred[i]<0.5:
+    ypred[i]=0
+  else:
+    ypred[i]=1
+print(classification_report(y_test, ypred))
+print(confusion_matrix(y_test, ypred))
