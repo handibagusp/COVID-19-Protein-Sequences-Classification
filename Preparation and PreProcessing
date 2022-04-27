@@ -1,0 +1,70 @@
+pip install discere
+import discere.discere as di
+
+di.extract_feature("/content/drive/MyDrive/Skripsi/Data/Positif.fasta",
+                   "/content/drive/MyDrive/Skripsi/Data/Negatif.fasta",'/content')
+                   
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+import discere.discere as di
+import itertools as it
+import os,pickle
+import shutil, pkg_resources
+from Bio import SeqIO
+from Bio.SeqUtils.ProtParam import ProteinAnalysis
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.model_selection import train_test_split,cross_val_score, GridSearchCV, StratifiedKFold
+from sklearn.svm import SVC
+from sklearn.svm import SVR
+from sklearn import metrics
+from sklearn.decomposition import PCA
+from itertools import cycle
+from sklearn.ensemble import ExtraTreesClassifier,RandomForestClassifier
+import matplotlib.pyplot as plt
+from matplotlib.pyplot import figure
+from sklearn.feature_selection import RFECV
+from sklearn.feature_selection import RFE
+from sklearn.metrics import make_scorer, accuracy_score
+import xgboost as xgb
+from xgboost.sklearn import XGBClassifier
+
+import sys
+
+fasta = []
+test = []
+with open("/content/drive/MyDrive/Skripsi/Data/Data_Covid19.fasta") as file_one:
+    for line in file_one:
+        line = line.strip()
+        if not line:
+           continue
+        if line.startswith(">"):
+            active_sequence_name = line[1:]
+            if active_sequence_name not in fasta:
+                test.append(''.join(fasta))
+                fasta = []
+            continue
+        sequence = line
+        fasta.append(sequence)
+
+# Flush the last fasta block to the test list
+if fasta:
+    test.append(''.join(fasta))
+
+# Print the test list
+for i, row in enumerate(test):
+    print(i)
+    print(row)
+    
+print("Total number of labels: {}".format(df.shape[0]))
+print("Number of Non-Covid Protein: {}".format(df[df[27] == 0].shape[0]))
+print("Number of Covid Protein: {}".format(df[df[27] == 1].shape[0]))
+
+x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
+
+scaler = StandardScaler()
+x_train = scaler.fit_transform(x_train)
+x_test = scaler.transform(x_test)
+x_train = pd.DataFrame(x_train)
+x_test = pd.DataFrame(x_test)
