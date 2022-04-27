@@ -1,0 +1,66 @@
+1. Max Depth and Min Child Weight
+model= XGBClassifier()
+tune_param = {'max_depth': range(1,10) ,
+              'min_child_weight': range(1,10)} 
+
+xgbcv = GridSearchCV(XGBClassifier(objective= 'binary:logistic',
+         booster= 'dart',
+          eta= 0.2,
+         max_depth=6,
+         min_child_weight=2,
+         gamma= 0,
+         subsample=0.8,
+         colsample_bytree =0.8),param_grid = tune_param, scoring='roc_auc',n_jobs=4,iid=False, cv=5)
+
+xgbcv.fit(x_train,y_train)
+xgbcv.best_params_, xgbcv.best_score_
+
+2. Gamma
+model= XGBClassifier()
+tune_param2 = {'gamma':[i/10.0 for i in range(0,11)]} 
+
+xgbcv = GridSearchCV(XGBClassifier(objective= 'binary:logistic',
+         booster= 'dart',
+          eta= 0.2,
+         max_depth=5,
+         min_child_weight=1,
+         gamma= 0,
+         subsample=0.8,
+         colsample_bytree =0.8),param_grid = tune_param2, scoring='roc_auc',n_jobs=4,iid=False, cv=5)
+
+xgbcv.fit(x_train,y_train)
+xgbcv.best_params_, xgbcv.best_score_
+
+3.Subsample and Colsample by tree
+tune_param3 = {'subsample':[i/10.0 for i in range(0,11)],
+               'colsample_bytree':[i/10.0 for i in range(0,11)]} 
+
+xgbcv = GridSearchCV(XGBClassifier(objective= 'binary:logistic',
+         booster= 'dart',
+          eta= 0.2,
+         max_depth=5,
+         min_child_weight=1,
+         gamma= 0,
+         subsample=0.8,
+         colsample_bytree =0.8),param_grid = tune_param3, scoring='roc_auc',n_jobs=4,iid=False, cv=5)
+
+xgbcv.fit(x_train,y_train)
+xgbcv.best_params_, xgbcv.best_score_
+
+4. Alpha and Lambda
+tune_param5 = {'reg_alpha':[0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5, 10],
+               'reg_lambda':[0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5, 10]} 
+
+xgbcv = GridSearchCV(XGBClassifier(objective= 'binary:logistic',
+         booster= 'dart',
+          eta= 0.2,
+         max_depth=5,
+         min_child_weight=1,
+         gamma= 0,
+         subsample=1,
+         colsample_bytree =0.35,
+         reg_alpha= 0,
+         reg_lambda=1),param_grid = tune_param5, scoring='roc_auc',n_jobs=4,iid=False, cv=5)
+
+xgbcv.fit(x_train,y_train)
+xgbcv.best_params_, xgbcv.best_score_
